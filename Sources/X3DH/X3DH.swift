@@ -30,7 +30,7 @@ public extension SymmetricKey {
     var data: Data {
         self.withUnsafeBytes { Data($0) }
     }
-    
+
     var base64string : String {
         self.data.base64EncodedString()
     }
@@ -131,7 +131,7 @@ public class X3DH {
 
         var ad = Data()
         ad.append(contentsOf: Data(identityKeyPair.pubKey.r))
-        ad.append(contentsOf: try remoteIdentityKey.asDH().rawRepresentation)
+        ad.append(contentsOf: Data(remoteIdentityKey.r))
 
         return KeyAgreementInitiation(sharedSecret: sk, associatedData: ad, ephemeralPublicKey: ephemeralKeyPair.pubKey)
     }
