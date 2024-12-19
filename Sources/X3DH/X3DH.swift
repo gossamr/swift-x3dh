@@ -14,13 +14,13 @@ public typealias DHPrivKey = Curve25519.KeyAgreement.PrivateKey
 public typealias IDPubKey = PublicKey
 public typealias IDPrivKey = PrivateKey
 
-public extension IDPubKey {
+extension IDPubKey {
     func asDH() throws -> DHPubKey {
-        return try DHPubKey(rawRepresentation: self.asX25519())
+        return try DHPubKey(rawRepresentation: Data(self.asX25519()))
     }
 }
 
-public extension IDPrivKey {
+extension IDPrivKey {
     func asDH() throws -> DHPrivKey {
         return try DHPrivKey(rawRepresentation: Data(self.asX25519()))
     }
@@ -69,8 +69,6 @@ public class X3DH {
         }
     }
 
-    public typealias PrekeySignatureVerifier = (Data) -> Bool
-
     public struct SignedPrekeyPair {
         public let keyPair: DHKeyPair
         public let signature: Signature
@@ -117,7 +115,7 @@ public class X3DH {
         return SignedPrekeyPair(keyPair: dhKeyPair, signature: Signature(message: dhKeyPair.pubKey.rawRepresentation.bytes, sig: sig, pubKey: idKeyPair.pubKey))
     }
 
-    public func initiateKeyAgreement(remoteIdentityKey: DHPubKey, remotePrekey: DHPubKey, prekeySignature: Signature, remoteOneTimePrekey: DHPubKey?, identityKeyPair: IDKeyPair, prekey: DHPubKey, info: String) throws -> KeyAgreementInitiation {
+    public func initiateKeyAgreement(remoteIdentityKey: IDPubKey, remotePrekey: DHPubKey, prekeySignature: Signature, remoteOneTimePrekey: DHPubKey?, identityKeyPair: IDKeyPair, prekey: DHPubKey, info: String) throws -> KeyAgreementInitiation {
         guard prekeySignature.verify() else {
             throw X3DHError.invalidPrekeySignature
         }
@@ -125,7 +123,7 @@ public class X3DH {
         let ephemeralKeyPair = generateDHKeyPair()
 
         let dh1 = DH(localKeyPair: try identityKeyPair.asDH(), remotePubKey: remotePrekey)
-        let dh2 = DH(localKeyPair: ephemeralKeyPair, remotePubKey: remoteIdentityKey)
+        let dh2 = DH(localKeyPair: ephemeralKeyPair, remotePubKey: try  remoteIdentityKey.asDH())
         let dh3 = DH(localKeyPair: ephemeralKeyPair, remotePubKey: remotePrekey)
         let dh4: DH? = remoteOneTimePrekey.map { DH(localKeyPair: ephemeralKeyPair, remotePubKey: $0) }
 
@@ -133,13 +131,13 @@ public class X3DH {
 
         var ad = Data()
         ad.append(contentsOf: Data(identityKeyPair.pubKey.r))
-        ad.append(contentsOf: remoteIdentityKey.rawRepresentation)
+        ad.append(contentsOf: try remoteIdentityKey.asDH().rawRepresentation)
 
         return KeyAgreementInitiation(sharedSecret: sk, associatedData: ad, ephemeralPublicKey: ephemeralKeyPair.pubKey)
     }
 
-    public func sharedSecretFromKeyAgreement(remoteIdentityKey: DHPubKey, remoteEphemeralKey: DHPubKey, usedOneTimePrekeyPair: DHKeyPair?, identityKeyPair: IDKeyPair, prekeyPair: DHKeyPair, info: String) throws -> SymmetricKey {
-        let dh1 = DH(localKeyPair: prekeyPair, remotePubKey: remoteIdentityKey)
+    public func sharedSecretFromKeyAgreement(remoteIdentityKey: IDPubKey, remoteEphemeralKey: DHPubKey, usedOneTimePrekeyPair: DHKeyPair?, identityKeyPair: IDKeyPair, prekeyPair: DHKeyPair, info: String) throws -> SymmetricKey {
+        let dh1 = DH(localKeyPair: prekeyPair, remotePubKey: try remoteIdentityKey.asDH())
         let dh2 = DH(localKeyPair: try identityKeyPair.asDH(), remotePubKey: remoteEphemeralKey)
         let dh3 = DH(localKeyPair: prekeyPair, remotePubKey: remoteEphemeralKey)
         let dh4: DH? = usedOneTimePrekeyPair.map {

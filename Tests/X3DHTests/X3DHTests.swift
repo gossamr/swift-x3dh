@@ -28,13 +28,15 @@ final class X3DHTests: XCTestCase {
         let aliceIdentityKeyPair = alice.generateIdentityKeyPair()
         let aliceSignedPrekey = try alice.generateSignedPrekeyPair(idKeyPair: aliceIdentityKeyPair)
 
-        // [Alice fetches bob's prekey bundle]
+        // [Alice fetches bob's prekey bundle, containing: bobIdentityKeyPair.pubKey, bobSignedPrekey.signature, bobSignedPrekey.keyPair.pubKey, and bobOneTimePreKey[0].pubKey]
+        // Alice rebuilds Bob's Prekey signature object
+        let aliceCopyBobSignedPreKeySig = X3DH.Signature(message: bobSignedPrekey.signature.message, sig: bobSignedPrekey.signature.sig, pubKey: bobSignedPrekey.signature.pubKey)
 
-        let keyAgreementInitiation = try alice.initiateKeyAgreement(remoteIdentityKey: try bobIdentityKeyPair.pubKey.asDH(), remotePrekey: bobSignedPrekey.keyPair.pubKey, prekeySignature: bobSignedPrekey.signature, remoteOneTimePrekey: bobOneTimePrekey.first!.pubKey, identityKeyPair: aliceIdentityKeyPair, prekey: aliceSignedPrekey.keyPair.pubKey, info: "X3DHTest")
+        let keyAgreementInitiation = try alice.initiateKeyAgreement(remoteIdentityKey: bobIdentityKeyPair.pubKey, remotePrekey: bobSignedPrekey.keyPair.pubKey, prekeySignature: aliceCopyBobSignedPreKeySig, remoteOneTimePrekey: bobOneTimePrekey.first!.pubKey, identityKeyPair: aliceIdentityKeyPair, prekey: aliceSignedPrekey.keyPair.pubKey, info: "X3DHTest")
 
         // [Alice sends identity key, ephemeral key and used one-time prekey id to bob]
 
-        let sharedSecret = try bob.sharedSecretFromKeyAgreement(remoteIdentityKey: aliceIdentityKeyPair.pubKey.asDH(), remoteEphemeralKey: keyAgreementInitiation.ephemeralPublicKey, usedOneTimePrekeyPair: bobOneTimePrekey.first!, identityKeyPair: bobIdentityKeyPair, prekeyPair: bobSignedPrekey.keyPair, info: "X3DHTest")
+        let sharedSecret = try bob.sharedSecretFromKeyAgreement(remoteIdentityKey: aliceIdentityKeyPair.pubKey, remoteEphemeralKey: keyAgreementInitiation.ephemeralPublicKey, usedOneTimePrekeyPair: bobOneTimePrekey.first!, identityKeyPair: bobIdentityKeyPair, prekeyPair: bobSignedPrekey.keyPair, info: "X3DHTest")
         XCTAssertTrue(keyAgreementInitiation.sharedSecret == sharedSecret)
     }
 
