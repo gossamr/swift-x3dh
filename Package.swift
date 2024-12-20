@@ -16,7 +16,7 @@ let package = Package(
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        .package(url: "https://github.com/gossamr/SwiftEdDSA", branch: "vmc"),
+        .package(url: "https://github.com/gossamr/SwiftEdDSA", from: "3.6.1"),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
