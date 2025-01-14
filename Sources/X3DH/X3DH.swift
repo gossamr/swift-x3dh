@@ -60,6 +60,12 @@ public class X3DH {
     }
 
     public struct Signature {
+        public init(message: Bytes, sig: Bytes, pubKey: IDPubKey) {
+            self.message = message
+            self.sig = sig
+            self.pubKey = pubKey
+        }
+
         public let message: Bytes
         public let sig: Bytes
         public let pubKey: IDPubKey
