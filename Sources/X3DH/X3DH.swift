@@ -121,7 +121,7 @@ public class X3DH {
         return SignedPrekeyPair(keyPair: dhKeyPair, signature: Signature(message: dhKeyPair.pubKey.rawRepresentation.bytes, sig: sig, pubKey: idKeyPair.pubKey))
     }
 
-    public func initiateKeyAgreement(remoteIdentityKey: IDPubKey, remotePrekey: DHPubKey, prekeySignature: Signature, remoteOneTimePrekey: DHPubKey?, identityKeyPair: IDKeyPair, prekey: DHPubKey, info: String) throws -> KeyAgreementInitiation {
+    public func initiateKeyAgreement(remoteIdentityKey: IDPubKey, remotePrekey: DHPubKey, prekeySignature: Signature, remoteOneTimePrekey: DHPubKey?, identityKeyPair: IDKeyPair, info: String) throws -> KeyAgreementInitiation {
         guard prekeySignature.verify() else {
             throw X3DHError.invalidPrekeySignature
         }
@@ -172,7 +172,7 @@ public class X3DH {
         dh1.withUnsafeBytes { input.append(contentsOf: $0) }
         dh2.withUnsafeBytes { input.append(contentsOf: $0) }
         dh3.withUnsafeBytes { input.append(contentsOf: $0) }
-        if let dh4 = dh4 {
+        if let dh4 {
             dh4.withUnsafeBytes { input.append(contentsOf: $0) }
         }
 

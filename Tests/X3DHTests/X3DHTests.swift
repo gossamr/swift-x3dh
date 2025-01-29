@@ -26,13 +26,12 @@ final class X3DHTests: XCTestCase {
 
         let alice = X3DH()
         let aliceIdentityKeyPair = alice.generateIdentityKeyPair()
-        let aliceSignedPrekey = try alice.generateSignedPrekeyPair(idKeyPair: aliceIdentityKeyPair)
 
         // [Alice fetches bob's prekey bundle, containing: bobIdentityKeyPair.pubKey, bobSignedPrekey.signature, bobSignedPrekey.keyPair.pubKey, and bobOneTimePreKey[0].pubKey]
         // Alice rebuilds Bob's Prekey signature object
         let aliceCopyBobSignedPreKeySig = X3DH.Signature(message: bobSignedPrekey.signature.message, sig: bobSignedPrekey.signature.sig, pubKey: bobSignedPrekey.signature.pubKey)
 
-        let keyAgreementInitiation = try alice.initiateKeyAgreement(remoteIdentityKey: bobIdentityKeyPair.pubKey, remotePrekey: bobSignedPrekey.keyPair.pubKey, prekeySignature: aliceCopyBobSignedPreKeySig, remoteOneTimePrekey: bobOneTimePrekey.first!.pubKey, identityKeyPair: aliceIdentityKeyPair, prekey: aliceSignedPrekey.keyPair.pubKey, info: "X3DHTest")
+        let keyAgreementInitiation = try alice.initiateKeyAgreement(remoteIdentityKey: bobIdentityKeyPair.pubKey, remotePrekey: bobSignedPrekey.keyPair.pubKey, prekeySignature: aliceCopyBobSignedPreKeySig, remoteOneTimePrekey: bobOneTimePrekey.first!.pubKey, identityKeyPair: aliceIdentityKeyPair, info: "X3DHTest")
 
         // [Alice sends identity key, ephemeral key and used one-time prekey id to bob]
 
