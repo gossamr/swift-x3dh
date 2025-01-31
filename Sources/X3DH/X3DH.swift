@@ -14,6 +14,54 @@ public typealias DHPrivKey = Curve25519.KeyAgreement.PrivateKey
 public typealias IDPubKey = PublicKey
 public typealias IDPrivKey = PrivateKey
 
+extension SymmetricKey: Codable {
+    enum CodingKeys: CodingKey {
+        case key
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(self.data, forKey: .key)
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(data: try container.decode(Data.self, forKey: .key))
+    }
+}
+
+extension DHPubKey: Codable {
+    enum CodingKeys: CodingKey {
+        case key
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(self.rawRepresentation, forKey: .key)
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        try self.init(rawRepresentation: container.decode(Data.self, forKey: .key))
+    }
+}
+
+extension DHPrivKey: Codable {
+    enum CodingKeys: CodingKey {
+        case key
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(self.rawRepresentation, forKey: .key)
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        try self.init(rawRepresentation: container.decode(Data.self, forKey: .key))
+    }
+}
+
 extension IDPubKey {
     func asDH() throws -> DHPubKey {
         return try DHPubKey(rawRepresentation: Data(self.asX25519()))
@@ -45,6 +93,11 @@ fileprivate extension Data {
 public class X3DH {
     // Type wrappers around primitives
     public struct IDKeyPair {
+        public init(privKey: IDPrivKey, pubKey: IDPubKey) {
+            self.privKey = privKey
+            self.pubKey = pubKey
+        }
+
         public let privKey: IDPrivKey
         public let pubKey: IDPubKey
         
@@ -54,12 +107,17 @@ public class X3DH {
         }
     }
 
-    public struct DHKeyPair {
+    public struct DHKeyPair: Codable {
+        public init(privKey: DHPrivKey, pubKey: DHPubKey) {
+            self.privKey = privKey
+            self.pubKey = pubKey
+        }
+
         public let privKey: DHPrivKey
         public let pubKey: DHPubKey
     }
 
-    public struct Signature {
+    public struct Signature: Codable {
         public init(message: Bytes, sig: Bytes, pubKey: IDPubKey) {
             self.message = message
             self.sig = sig
@@ -75,7 +133,12 @@ public class X3DH {
         }
     }
 
-    public struct SignedPrekeyPair {
+    public struct SignedPrekeyPair: Codable {
+        public init(keyPair: DHKeyPair, signature: Signature) {
+            self.keyPair = keyPair
+            self.signature = signature
+        }
+
         public let keyPair: DHKeyPair
         public let signature: Signature
     }
@@ -89,7 +152,7 @@ public class X3DH {
         }
     }
 
-    public struct KeyAgreementInitiation {
+    public struct KeyAgreementInitiation: Codable {
         public let sharedSecret: SymmetricKey
         public let associatedData: Data
         public let ephemeralPublicKey: DHPubKey
