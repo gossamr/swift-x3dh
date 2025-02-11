@@ -12,39 +12,34 @@ typealias Bytes = [UInt8]
 
 final class X3DHTests: XCTestCase {
     func test2() throws {
-        let a = X3DH()
-        let idkp = a.generateIdentityKeyPair()
-        let _ = try a.generateSignedPrekeyPair(idKeyPair: idkp)
+        let idkp = X3DH.generateIdentityKeyPair()
+        let _ = try X3DH.generateSignedPrekeyPair(idKeyPair: idkp)
     }
 
     func test3() throws {
         // Full flow integration test should produce equivalent secrets
-        let bob = X3DH()
-        let bobIdentityKeyPair = bob.generateIdentityKeyPair()
-        let bobSignedPrekey = try bob.generateSignedPrekeyPair(idKeyPair: bobIdentityKeyPair)
-        let bobOneTimePrekey = bob.generateOneTimePrekeyPairs(count: 2)
+        let bobIdentityKeyPair = X3DH.generateIdentityKeyPair()
+        let bobSignedPrekey = try X3DH.generateSignedPrekeyPair(idKeyPair: bobIdentityKeyPair)
+        let bobOneTimePrekey = X3DH.generateOneTimePrekeyPairs(count: 2)
 
-        let alice = X3DH()
-        let aliceIdentityKeyPair = alice.generateIdentityKeyPair()
+        let aliceIdentityKeyPair = X3DH.generateIdentityKeyPair()
 
         // [Alice fetches bob's prekey bundle, containing: bobIdentityKeyPair.pubKey, bobSignedPrekey.signature, bobSignedPrekey.keyPair.pubKey, and bobOneTimePreKey[0].pubKey]
         // Alice rebuilds Bob's Prekey signature object
         let aliceCopyBobSignedPreKeySig = X3DH.Signature(message: bobSignedPrekey.signature.message, sig: bobSignedPrekey.signature.sig, pubKey: bobSignedPrekey.signature.pubKey)
 
-        let keyAgreementInitiation = try alice.initiateKeyAgreement(remoteIdentityKey: bobIdentityKeyPair.pubKey, remotePrekey: bobSignedPrekey.keyPair.pubKey, prekeySignature: aliceCopyBobSignedPreKeySig, remoteOneTimePrekey: bobOneTimePrekey.first!.pubKey, identityKeyPair: aliceIdentityKeyPair, info: "X3DHTest")
+        let keyAgreementInitiation = try X3DH.initiateKeyAgreement(remoteIdentityKey: bobIdentityKeyPair.pubKey, remotePrekey: bobSignedPrekey.keyPair.pubKey, prekeySignature: aliceCopyBobSignedPreKeySig, remoteOneTimePrekey: bobOneTimePrekey.first!.pubKey, identityKeyPair: aliceIdentityKeyPair, info: "X3DHTest")
 
         // [Alice sends identity key, ephemeral key and used one-time prekey id to bob]
 
-        let sharedSecret = try bob.sharedSecretFromKeyAgreement(remoteIdentityKey: aliceIdentityKeyPair.pubKey, remoteEphemeralKey: keyAgreementInitiation.ephemeralPublicKey, usedOneTimePrekeyPair: bobOneTimePrekey.first!, identityKeyPair: bobIdentityKeyPair, prekeyPair: bobSignedPrekey.keyPair, info: "X3DHTest")
+        let sharedSecret = try X3DH.sharedSecretFromKeyAgreement(remoteIdentityKey: aliceIdentityKeyPair.pubKey, remoteEphemeralKey: keyAgreementInitiation.ephemeralPublicKey, usedOneTimePrekeyPair: bobOneTimePrekey.first!, identityKeyPair: bobIdentityKeyPair, prekeyPair: bobSignedPrekey.keyPair, info: "X3DHTest")
         XCTAssertTrue(keyAgreementInitiation.sharedSecret == sharedSecret)
     }
 
     func test4() throws {
-        let alice = X3DH()
-        let bob = X3DH()
-        let aidkp = alice.generateIdentityKeyPair()
-        let bidkp = bob.generateIdentityKeyPair()
-        let bdhkp = bob.generateOneTimePrekeyPairs(count: 1)
+        let aidkp = X3DH.generateIdentityKeyPair()
+        let bidkp = X3DH.generateIdentityKeyPair()
+        let bdhkp = X3DH.generateOneTimePrekeyPairs(count: 1)
         let dh1 = try aidkp.asDH().privKey.sharedSecretFromKeyAgreement(with: bdhkp.first!.pubKey)
         let dh2 = try bdhkp.first!.privKey.sharedSecretFromKeyAgreement(with: try aidkp.asDH().pubKey)
         let dh3 = try aidkp.asDH().privKey.sharedSecretFromKeyAgreement(with: try bidkp.pubKey.asDH())
@@ -54,8 +49,7 @@ final class X3DHTests: XCTestCase {
     }
 
     func test5() throws {
-        let alice = X3DH()
-        let aidkp = alice.generateIdentityKeyPair()
+        let aidkp = X3DH.generateIdentityKeyPair()
         let p2p = try aidkp.privKey.asDH().publicKey
         let pc = try aidkp.pubKey.asDH()
         XCTAssertTrue(p2p.rawRepresentation == pc.rawRepresentation)
